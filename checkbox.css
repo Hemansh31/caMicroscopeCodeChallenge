@@ -64,6 +64,7 @@
 .slidecontainer {
   width: 550px;
   justify-self: center;
+  background-color: red;
 }
 .slider{
   width: 100%;
