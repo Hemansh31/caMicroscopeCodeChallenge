@@ -6,14 +6,30 @@
 </head>
 <body>
 	<h1 style="text-align: center;font-family: monospace;">Cross-Slide Coordinated Viewing Code Challenge GSoC 2020</h1><br>
-	<center><label class="container">
-	  <input type="checkbox" id="sync" onclick="alterSync()">
-	  <span class="checkmark"></span><span style="margin-left: 35px;">Sync</span>
-	</label></center>
+	<label class="container" style="margin-left: 35px;">
+	  <input type="radio" name="radio" id="IND" checked="checked" onclick="IND()">Independent
+	  <span class="checkmark"></span>
+	</label>
+	<label class="container" style="margin-left: 35px;">
+	  <input type="radio" name="radio" id="POI" onclick="POI()">Configure
+	  <span class="checkmark"></span>
+	</label>
+	<label class="container" style="margin-left: 35px;">
+	  <input type="radio" name="radio" id="sync" onclick="alterSync()">Sync
+	  <span class="checkmark"></span>
+	</label>
 	<div id="wrapper" style="display:grid;grid-template-columns: 1fr 1fr;width: 100%;">
-		<div id="openseadragon1" style="width: 600px; height: 400px;justify-self: center;"></div>
-		<div id="openseadragon2" style="width: 600px; height: 400px;justify-self: center;"></div>
+		<div id="openseadragon1" style="width: 600px; height: 381px;justify-self: center;"></div>
+		<div id="openseadragon2" style="width: 600px; height: 381px;justify-self: center;"></div>
+		<div class="slidecontainer">
+		  	<input type="range" min="0" max="360" value="0" class="slider" id="myRange1">
+		</div>
+		<div class="slidecontainer">
+		  	<input type="range" min="0" max="360" value="0" class="slider" id="myRange2">
+		</div>
 	</div>
+	<img src="pointer_small.png" id="pointer1">
+	<img src="pointer_small.png" id="pointer2">
 	<script src="openseadragon/openseadragon.min.js"></script>
 	<script type="text/javascript">
 	    var viewer = OpenSeadragon({
@@ -31,7 +47,8 @@
 		                Width:  "10240"
 		            }
 		        }
-		    }
+		    },
+		    autoHideControls:false
 	    });
 	    var sviewer = OpenSeadragon({
 	        id: "openseadragon2",
@@ -48,7 +65,50 @@
 		                Width:  "10240"
 		            }
 		        }
-		    }
+		    },
+		    autoHideControls:false
+	    });
+	    var aratio=viewer.viewport.getAspectRatio();
+	    var configuration={
+	    	XC: viewer.viewport.getCenter(true).x,
+	    	YC: ((viewer.viewport.getCenter(true).x)/aratio),
+	    	RA: 0,
+	    };
+	    var sconfiguration={
+	    	XC: sviewer.viewport.getCenter(true).x,
+	    	YC: ((sviewer.viewport.getCenter(true).x)/aratio),
+	    	RA: 0,
+	    };
+	    var centerX=new OpenSeadragon.Point(configuration.XC,configuration.YC);
+	    var ref1=document.getElementById('pointer1');
+	    var ref2=document.getElementById('pointer2');
+	    viewer.addOverlay(ref1,centerX,OpenSeadragon.Placement.BOTTOM);
+	    viewer.forceRedraw();
+	    sviewer.addOverlay(ref2,centerX,OpenSeadragon.Placement.BOTTOM);
+	    sviewer.forceRedraw();
+	    var spoi=false;
+	    viewer.addHandler('canvas-click',function(event){
+		    if(spoi){
+		    	var webPoint = event.position;
+	    		var viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+	    		viewer.getOverlayById('pointer1').update(viewportPoint,OpenSeadragon.Placement.BOTTOM);
+	    		viewer.forceRedraw();
+	    		configuration.XC=viewer.getOverlayById('pointer1').location.x;
+	    		configuration.YC=viewer.getOverlayById('pointer1').location.y;
+	    		console.log(configuration);
+	    	}
+
+	    });
+	    sviewer.addHandler('canvas-click',function(event){
+		    if(spoi){
+		    	var webPoint = event.position;
+	    		var viewportPoint = sviewer.viewport.pointFromPixel(webPoint);
+	    		sviewer.getOverlayById('pointer2').update(viewportPoint,OpenSeadragon.Placement.BOTTOM);
+	    		sviewer.forceRedraw();
+	    		sconfiguration.XC=sviewer.getOverlayById('pointer2').location.x;
+	    		sconfiguration.YC=sviewer.getOverlayById('pointer2').location.y;
+	    		console.log(sconfiguration);
+	    	}
 	    });
 	    var enable=false;
 	    var sviewerleading=false;
@@ -62,7 +122,10 @@
 			}
 			viewerleading=true;
 		    sviewer.viewport.zoomTo(viewer.viewport.getZoom());
-	        sviewer.viewport.panTo(viewer.viewport.getCenter());
+		    var Xx=((viewer.viewport.getCenter().x) - configuration.XC) + sconfiguration.XC;
+		    var Yy=((viewer.viewport.getCenter().y) - configuration.YC) + sconfiguration.YC;
+		    var PanPoint= new OpenSeadragon.Point(Xx,Yy);
+	        sviewer.viewport.panTo(PanPoint);
 	        viewerleading=false;
 		});
 		viewer.addHandler('pan', function(event) {
@@ -74,7 +137,10 @@
 			}
 			viewerleading=true;
 		    sviewer.viewport.zoomTo(viewer.viewport.getZoom());
-	        sviewer.viewport.panTo(viewer.viewport.getCenter());
+		    var Xx=((viewer.viewport.getCenter().x) - configuration.XC) + sconfiguration.XC;
+		    var Yy=((viewer.viewport.getCenter().y) - configuration.YC) + sconfiguration.YC;
+		    var PanPoint= new OpenSeadragon.Point(Xx,Yy);
+	        sviewer.viewport.panTo(PanPoint);
 	        viewerleading=false;
 		});
 		sviewer.addHandler('zoom', function(event) {
@@ -86,7 +152,10 @@
 			}
 			sviewerleading=true;
 		    viewer.viewport.zoomTo(sviewer.viewport.getZoom());
-	        viewer.viewport.panTo(sviewer.viewport.getCenter());
+		    var Xx=((sviewer.viewport.getCenter().x) - sconfiguration.XC) + configuration.XC;
+		    var Yy=((sviewer.viewport.getCenter().y) - sconfiguration.YC) + configuration.YC;
+		    var PanPoint= new OpenSeadragon.Point(Xx,Yy);
+	        viewer.viewport.panTo(PanPoint);
 	        sviewerleading=false;
 		});
 		sviewer.addHandler('pan', function(event) {
@@ -98,14 +167,83 @@
 			}
 			sviewerleading=true;
 		    viewer.viewport.zoomTo(sviewer.viewport.getZoom());
-	        viewer.viewport.panTo(sviewer.viewport.getCenter());
+		    var Xx=((sviewer.viewport.getCenter().x) - sconfiguration.XC) + configuration.XC;
+		    var Yy=((sviewer.viewport.getCenter().y) - sconfiguration.YC) + configuration.YC;
+		    var PanPoint= new OpenSeadragon.Point(Xx,Yy);
+	        viewer.viewport.panTo(PanPoint);
 	        sviewerleading=false;
 		});
 		function alterSync(){
 			enable=document.getElementById("sync").checked;
+			spoi=!enable;
 			if(enable){
+				viewer.zoomPerClick=2;
+				sviewer.zoomPerClick=2;
 				sviewer.viewport.zoomTo(viewer.viewport.getZoom(true),true);
-	        	sviewer.viewport.panTo(viewer.viewport.getCenter(true),true);
+		    	var Xx=((viewer.viewport.getCenter().x) - configuration.XC) + sconfiguration.XC;
+		   	 	var Yy=((viewer.viewport.getCenter().y) - configuration.YC) + sconfiguration.YC;
+		    	var PanPoint= new OpenSeadragon.Point(Xx,Yy);
+	        	sviewer.viewport.panTo(PanPoint,true);
+			}
+		}
+		function POI(){
+			var check=document.getElementById("POI").checked;
+			if(check){
+    		  viewer.zoomPerClick=1;
+    		  sviewer.zoomPerClick=1;
+			}
+			else{
+				viewer.zoomPerClick=2;
+				sviewer.zoomPerClick=2;
+			}
+			spoi=check;
+			enable=!check;
+		}
+		function IND(){
+			var check=document.getElementById("IND").checked;
+			if(check){
+    		  	enable=false;
+    		  	spoi=false;
+    		  	viewer.zoomPerClick=2;
+				sviewer.zoomPerClick=2;
+			}
+		}
+		var slider1=document.getElementById("myRange1");
+		var slider2=document.getElementById("myRange2");
+		slider1.oninput=function(){
+			viewer.viewport.setRotation(slider1.value);
+			if(spoi){
+				configuration.RA=viewer.viewport.getRotation();
+			}
+			if(enable&&!spoi){
+				var iv=parseInt(slider1.value);
+				var value=iv+(sconfiguration.RA - configuration.RA);
+				while(value<0){
+					value=value+360;
+				}
+				while(value>=360){
+					value=value-360;
+				}
+				sviewer.viewport.setRotation(value);
+				slider2.value=value;
+			}
+		}
+		slider2.oninput=function(){
+			sviewer.viewport.setRotation(slider2.value);
+			if(spoi){
+				sconfiguration.RA=sviewer.viewport.getRotation();
+			}
+			if(enable&&!spoi){
+				var iv=parseInt(slider2.value);
+				var value=(iv)+(configuration.RA - sconfiguration.RA);
+				while(value<0){
+					value=value+360;
+				}
+				while(value>=360){
+					value=value-360;
+				}
+				viewer.viewport.setRotation(value);
+				slider1.value=value;
 			}
 		}
 	</script>
