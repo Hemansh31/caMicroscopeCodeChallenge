@@ -11,3 +11,5 @@ Now you can configure the two OpenSeadragon instances for examples (set center, 
 Steps to configure:
 Select the configure option which enable you to move the pointer to any other point by clicking. Note, when configure option is selected the image can only be zoomed in using the scroll on mouse.
 Also one can independently rotate the images in configure mode and then syncing the images would sync them according the constraints you configured.
+
+View the preview.gif file to see configure in action.
